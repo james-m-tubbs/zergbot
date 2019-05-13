@@ -8,6 +8,8 @@ from absl import app
 import random
 
 class ZergAgent(base_agent.BaseAgent):
+  first_atack = False
+
   def __init__(self):
     super(ZergAgent, self).__init__()
     
@@ -31,6 +33,11 @@ class ZergAgent(base_agent.BaseAgent):
   def can_do(self, obs, action):
     return action in obs.observation.available_actions
 
+  def build_structure(self, build_function):
+      x = random.randint(0, 83)
+      y = random.randint(0, 83)
+      return build_function("now", (x, y))
+
   def step(self, obs):
     super(ZergAgent, self).step(obs)
     
@@ -45,10 +52,18 @@ class ZergAgent(base_agent.BaseAgent):
       else:
         self.attack_coordinates = (12, 16)
 
+      self.first_atack = False
+
+    queens = self.get_units_by_type(obs, units.Zerg.Queen)
+    if len(queens) > 0:
+      queen = random.choice(queens)
+      return actions.FUNCTIONS.select_point("select_all_type", (queen.x, queen.y))
+
     zerglings = self.get_units_by_type(obs, units.Zerg.Zergling)
     if len(zerglings) >= 20:
       if self.unit_type_is_selected(obs, units.Zerg.Zergling):
         if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
+          self.first_atack = True
           return actions.FUNCTIONS.Attack_minimap("now",
                                                   self.attack_coordinates)
 
@@ -56,21 +71,29 @@ class ZergAgent(base_agent.BaseAgent):
         return actions.FUNCTIONS.select_army("select")
 
     spawning_pools = self.get_units_by_type(obs, units.Zerg.SpawningPool)
+    # build spawning pool branch
     if len(spawning_pools) == 0:
       if self.unit_type_is_selected(obs, units.Zerg.Drone):
-        if self.can_do(obs, actions.FUNCTIONS.Build_SpawningPool_screen.id):
-          x = random.randint(0, 83)
-          y = random.randint(0, 83)
-          
-          return actions.FUNCTIONS.Build_SpawningPool_screen("now", (x, y))
-    
+          if self.can_do(obs, actions.FUNCTIONS.Build_SpawningPool_screen.id):
+            return self.build_structure(actions.FUNCTIONS.Build_SpawningPool_screen)
       drones = self.get_units_by_type(obs, units.Zerg.Drone)
       if len(drones) > 0:
         drone = random.choice(drones)
+        return actions.FUNCTIONS.select_point("select_all_type", (drone.x,drone.y))
 
-        return actions.FUNCTIONS.select_point("select_all_type", (drone.x,
-                                                                  drone.y))
-    
+    evolution_chambers = self.get_units_by_type(obs, units.Zerg.EvolutionChamber)
+    if len(evolution_chambers) == 0:
+        if self.first_atack:
+          if self.unit_type_is_selected(obs, units.Zerg.Drone):
+            if self.can_do(obs, actions.FUNCTIONS.Build_EvolutionChamber_screen.id):
+                return self.build_structure(actions.FUNCTIONS.Build_EvolutionChamber_screen)
+          drones = self.get_units_by_type(obs, units.Zerg.Drone)
+          if len(drones) > 0:
+            drone = random.choice(drones)
+
+            return actions.FUNCTIONS.select_point("select_all_type", (drone.x,
+                                                                      drone.y))
+
     if self.unit_type_is_selected(obs, units.Zerg.Larva):
       free_supply = (obs.observation.player.food_cap -
                      obs.observation.player.food_used)
@@ -78,16 +101,32 @@ class ZergAgent(base_agent.BaseAgent):
         if self.can_do(obs, actions.FUNCTIONS.Train_Overlord_quick.id):
           return actions.FUNCTIONS.Train_Overlord_quick("now")
 
+      if self.can_do(obs, actions.FUNCTIONS.Train_Roach_quick.id):
+          return actions.FUNCTIONS.Train_Roach_quick("now")
+
       if self.can_do(obs, actions.FUNCTIONS.Train_Zergling_quick.id):
         return actions.FUNCTIONS.Train_Zergling_quick("now")
     
     larvae = self.get_units_by_type(obs, units.Zerg.Larva)
     if len(larvae) > 0:
       larva = random.choice(larvae)
-      
-      return actions.FUNCTIONS.select_point("select_all_type", (larva.x,
-                                                                larva.y))
-    
+      return actions.FUNCTIONS.select_point("select_all_type", (larva.x, larva.y))
+
+    # i can't figure out why this doesn't work
+    hatcheries = self.get_units_by_type(obs, units.Zerg.Hatchery)
+
+    if len(queens) < len(hatcheries):
+        #if self.can_do(obs, actions.FUNCTIONS.Train_Queen_quick):
+        #return actions.FUNCTIONS.Train_Queen_quick.id("now")
+
+    if len(hatcheries) > 0:
+        hatchery = random.choice(hatcheries)
+        return actions.FUNCTIONS.select_point("select_all_type", (hatchery.x, hatchery.y))
+
+
+
+
+    #default no-op
     return actions.FUNCTIONS.no_op()
 
 def main(unused_argv):
