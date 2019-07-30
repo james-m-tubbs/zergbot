@@ -47,12 +47,16 @@ _QUEUED = [1]
 
 ACTION_DO_NOTHING = 'donothing'
 ACTION_SELECT_ARMY = 'selectarmy'
-ACTION_ATTACK = 'attack'
+ACTION_ATTACK_ZERGLINGS = 'attack_zerglings'
+ACTION_ATTACK_DRONES = 'attack_drones'
+ACTION_ATTACK_QUEENS = 'attack_queens'
 
 basic_actions = [
     ACTION_DO_NOTHING,
     ACTION_SELECT_ARMY,
-    ACTION_ATTACK
+    ACTION_ATTACK_ZERGLINGS,
+    ACTION_ATTACK_DRONES,
+    ACTION_ATTACK_QUEENS
 ]
 
 ACTION_SELECT_HATCHERY = 'selecthatchery'
@@ -191,8 +195,11 @@ class ZergAgent(base_agent.BaseAgent):
       xmean = player_x.mean()
       ymean = player_y.mean()
 
-      if xmean <= 31 and ymean <= 31:
-        self.attack_coordinates = (49, 49)
+      print(xmean)
+      print(ymean)
+
+      if xmean <= 40 and ymean <= 40:
+        self.attack_coordinates = (200, 200)
       else:
         self.attack_coordinates = (12, 16)
 
@@ -320,13 +327,29 @@ class ZergAgent(base_agent.BaseAgent):
             return actions.FUNCTIONS.select_point("select_all_type", (zergling.x,
                                                                       zergling.y))
 
-    elif smart_action == ACTION_ATTACK:
+    elif smart_action == ACTION_ATTACK_ZERGLINGS:
         zerglings = self.get_units_by_type(obs, units.Zerg.Zergling)
-        if len(zerglings) >= 10:
-            if self.unit_type_is_selected(obs, units.Zerg.Zergling):
+        if self.unit_type_is_selected(obs, units.Zerg.Zergling):
+            if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
+                return actions.FUNCTIONS.Attack_minimap("now",
+                                                        self.attack_coordinates)
+
+    elif smart_action == ACTION_ATTACK_DRONES:
+        drones = self.get_units_by_type(obs, units.Zerg.Drone)
+        if len(drones) >= 10:
+            if self.unit_type_is_selected(obs, units.Zerg.Drone):
                 if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
                     return actions.FUNCTIONS.Attack_minimap("now",
                                                             self.attack_coordinates)
+    elif smart_action == ACTION_ATTACK_QUEENS:
+        queens = self.get_units_by_type(obs, units.Zerg.Queen)
+        if len(queens) >= 10:
+            if self.unit_type_is_selected(obs, units.Zerg.Queen):
+                if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
+                    return actions.FUNCTIONS.Attack_minimap("now",
+                                                            self.attack_coordinates)
+
+
 
     ###############################
     ### Hatchery Actions ###
