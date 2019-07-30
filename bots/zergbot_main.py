@@ -336,18 +336,16 @@ class ZergAgent(base_agent.BaseAgent):
 
     elif smart_action == ACTION_ATTACK_DRONES:
         drones = self.get_units_by_type(obs, units.Zerg.Drone)
-        if len(drones) >= 10:
-            if self.unit_type_is_selected(obs, units.Zerg.Drone):
-                if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
-                    return actions.FUNCTIONS.Attack_minimap("now",
-                                                            self.attack_coordinates)
+        if self.unit_type_is_selected(obs, units.Zerg.Drone):
+            if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
+                return actions.FUNCTIONS.Attack_minimap("now",
+                                                        self.attack_coordinates)
     elif smart_action == ACTION_ATTACK_QUEENS:
         queens = self.get_units_by_type(obs, units.Zerg.Queen)
-        if len(queens) >= 10:
-            if self.unit_type_is_selected(obs, units.Zerg.Queen):
-                if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
-                    return actions.FUNCTIONS.Attack_minimap("now",
-                                                            self.attack_coordinates)
+        if self.unit_type_is_selected(obs, units.Zerg.Queen):
+            if self.can_do(obs, actions.FUNCTIONS.Attack_minimap.id):
+                return actions.FUNCTIONS.Attack_minimap("now",
+                                                        self.attack_coordinates)
 
 
 
